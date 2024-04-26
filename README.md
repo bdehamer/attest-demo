@@ -89,6 +89,26 @@ attestation to the build artifact generated in this workflow.
 
 See an example of an SBOM attestation [here][7].
 
+## Attestation Verification
+
+The "verify" job in the workflow shows an example of using the `gh` CLI to
+verify the attestations which were generated for the build artifact:
+
+```yaml
+- name: Verify build artifact
+  env:
+    GH_TOKEN: ${{ github.token }}
+    run: ./bin/gh attestation verify *.whl --owner github
+```
+
+The output will look something like the following, showing both the build
+provenance and SBOM attestations:
+
+```
+github/attest-demo	https://spdx.dev/Document/v2.3	.github/workflows/build.yml@refs/heads/main
+github/attest-demo	https://slsa.dev/provenance/v1	.github/workflows/build.yml@refs/heads/main
+```
+
 [1]: https://github.com/actions/attest-build-provenance
 [2]: https://github.com/actions/attest-sbom
 [3]: .github/workflows/build.yml
