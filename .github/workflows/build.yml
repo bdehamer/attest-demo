@@ -46,3 +46,18 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: "dist/*.whl"
+
+  verify:
+    name: verify package
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      attestations: read
+      contents: read
+
+    steps:
+      - name: Retrieve build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: artifact
+      - run: ls -al
