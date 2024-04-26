@@ -31,8 +31,9 @@ jobs:
 
       # Generate an SBOM
       - name: Generate SBOM
-        uses: anchore/sbom-action@v0
+        uses: anchore/sbom-action@v0.15.11
         with:
+          file: "requirements.txt"
           format: "spdx-json"
           output-file: "sbom.spdx.json"
 
