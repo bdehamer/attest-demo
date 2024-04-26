@@ -11,6 +11,7 @@ jobs:
       attestations: write
       contents: read
       id-token: write
+
     steps:
       - uses: actions/checkout@v4
 
@@ -24,21 +25,19 @@ jobs:
       - name: Build package
         run: python -m build .
 
-      # Generate build provenance
-      - uses: actions/attest-build-provenance@v1
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v1
         with:
           subject-path: "dist/*.whl"
 
-      # Generate an SBOM
       - name: Generate SBOM
         uses: anchore/sbom-action@v0.15.11
         with:
-          file: "requirements.txt"
           format: "spdx-json"
           output-file: "sbom.spdx.json"
 
-      # Attest SBOM
-      - uses: actions/attest-sbom@v1
+      - name: Attest SBOM
+        uses: actions/attest-sbom@v1
         with:
           subject-path: "dist/*.whl"
           sbom-path: "sbom.spdx.json"
