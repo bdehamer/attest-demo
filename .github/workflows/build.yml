@@ -61,3 +61,17 @@ jobs:
         with:
           name: artifact
       - run: ls -al
+      # Need to checkout and build gh CLI until the latest version with v0.3
+      # attestation bundle support is released
+      - name: Checkout cli/cli
+        uses: actions/checkout@v4
+        with:
+          repository: cli/cli
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+      - name: Download dependencies
+        run: go mod download
+      - name: Build cli
+        run: make bin/gh
