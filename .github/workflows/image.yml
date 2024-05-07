@@ -6,7 +6,7 @@ on:
 jobs:
   build-artifact-ghcr:
     name: Build/Attest Artifact (GHCR)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       id-token: write
       attestations: write
