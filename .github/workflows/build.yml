@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Attest build provenance
-        uses: actions/attest@bdehamer/error-detail
+        uses: actions/attest@main
         with:
           subject-name: foo
           subject-digest: sha256:62ce42bde6b4ba3aa0c42aa375025015b639b142c9b4daf89fcd422fc75f4a13
