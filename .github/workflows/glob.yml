@@ -1,0 +1,30 @@
+name: Stress Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: attest many subjects
+    runs-on: ubuntu-latest
+    permissions:
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Build artifacts
+        run: |
+          mkdir subdir
+          for i in {1..50}
+          do
+            echo $i > artifact-${i}.bin
+            date >> artifact-${i}.bin
+          done
+      - name: Attest artifact
+        uses: actions/attest@main
+        env:
+          INPUT_PRIVATE-SIGNING: 'true'
+        with:
+          subject-path: '**/artifact-*'
+          predicate-type: 'text/plain'
+          predicate: '{}'
