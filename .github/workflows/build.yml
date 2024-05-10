@@ -26,7 +26,7 @@ jobs:
         run: python -m build .
 
       - name: Attest build provenance
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@main
         with:
           subject-path: "dist/*.whl"
 
@@ -37,7 +37,7 @@ jobs:
           output-file: "sbom.spdx.json"
 
       - name: Attest SBOM
-        uses: actions/attest-sbom@v1
+        uses: actions/attest-sbom@main
         with:
           subject-path: "dist/*.whl"
           sbom-path: "sbom.spdx.json"
