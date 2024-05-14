@@ -47,7 +47,7 @@ jobs:
           push: true
           sbom: true
           provenance: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:xyz
 
       - name: Attest artifact
         uses: actions/attest-build-provenance@v1
