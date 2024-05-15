@@ -1,4 +1,4 @@
-name: Image test
+name: Attest Image (GH Container Registry)
 
 on:
   workflow_dispatch:
