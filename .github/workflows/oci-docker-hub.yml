@@ -17,7 +17,7 @@ jobs:
       id-token: write
       attestations: write
     env:
-      REGISTRY: index.docker.io
+      REGISTRY: docker.io
       IMAGE_NAME: bdehamer/attest-demo
     steps:
       - name: Build artifact
