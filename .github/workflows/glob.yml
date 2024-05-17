@@ -21,10 +21,11 @@ jobs:
             date >> artifact-${i}.bin
           done
       - name: Attest artifact
-        uses: actions/attest@main
+        uses: actions/attest@bdehamer/batch-processing
         env:
           INPUT_PRIVATE-SIGNING: 'true'
         with:
           subject-path: '**/artifact-*'
           predicate-type: 'text/plain'
           predicate: '{}'
+          batch-size: 10
