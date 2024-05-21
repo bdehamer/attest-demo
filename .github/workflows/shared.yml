@@ -1,0 +1,74 @@
+name: Build / Attest / Verify (Shared)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Artifact
+    runs-on: ubuntu-latest
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Build package
+        run: python -m build .
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          path: "dist/*.whl"
+
+  attest:
+    name: Attest Artifact
+    needs: build
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+    uses: bdehamer/workflows/.github/workflows/attest.yml@main
+
+  verify:
+    name: Verify Attestation
+    needs: attest
+    runs-on: ubuntu-latest
+    permissions:
+      attestations: read
+      contents: read
+
+    steps:
+      # Need to checkout and build gh CLI until the latest version with v0.3
+      # attestation bundle support is released
+      #- name: Checkout cli/cli
+        #uses: actions/checkout@v4
+        #with:
+          #repository: cli/cli
+      #- name: Set up Go
+        #uses: actions/setup-go@v5
+        #with:
+          #go-version-file: "go.mod"
+      #- name: Download dependencies
+        #run: go mod download
+      #- name: Build cli
+        #run: make bin/gh
+
+      - name: Retrieve build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: artifact
+
+      - name: Verify build artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh attestation verify *.whl --owner "$GITHUB_REPOSITORY_OWNER"
