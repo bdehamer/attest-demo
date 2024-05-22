@@ -37,7 +37,7 @@ jobs:
       attestations: write
       contents: read
       id-token: write
-    uses: bdehamer/workflows/.github/workflows/attest.yml@main
+    uses: github/artifact-attestations-workflows/.github/workflows/attest.yml@09b495c3f12c7881b3cc17209a327792065c1a1d
 
   verify:
     name: Verify Attestation
@@ -56,4 +56,4 @@ jobs:
       - name: Verify build artifact
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh attestation verify *.whl --owner "$GITHUB_REPOSITORY_OWNER" --cert-identity-regex "bdehamer/workflows"
+        run: gh attestation verify *.whl --owner "$GITHUB_REPOSITORY_OWNER" --cert-identity-regex "github/artifact-attestations-workflows"
