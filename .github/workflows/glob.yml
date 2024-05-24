@@ -21,7 +21,7 @@ jobs:
             date >> artifact-${i}.bin
           done
       - name: Attest artifact
-        uses: actions/attest@bdehamer/batch-processing
+        uses: actions/attest@bdehamer/input-refactor
         env:
           INPUT_PRIVATE-SIGNING: 'true'
         with:
