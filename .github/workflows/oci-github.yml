@@ -50,7 +50,7 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
       - name: Attest artifact
-        uses: actions/attest@bdehamer/bugfix-boolean-input
+        uses: actions/attest@main
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.build-and-push.outputs.digest }}
