@@ -1,0 +1,34 @@
+name: Big SBOM Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      size:
+        description: 'SBOM size in MB'
+        type: string
+        required: true
+        default: 1
+
+permissions: {}
+
+jobs:
+  attest-sbom:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+
+    steps:
+      - name: Create SBOM
+        run: |
+          dd if=/dev/zero of=output.dat bs=${{ inputs.size }}M count=1
+          cat output.dat | base64 > payload.dat
+          jq --null-input --rawfile payload payload.dat '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","payload":$payload}' > sbom.json
+      - name: Attest SBOM
+        uses: actions/attest-sbom@v1
+        with:
+          subject-digest: 'sha256:7d070f6b64d9bcc530fe99cc21eaaa4b3c364e0b2d367d7735671fa202a03b32'
+          subject-name: 'subject'
+          sbom-path: 'sbom.json'
+
