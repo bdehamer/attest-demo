@@ -15,13 +15,13 @@ jobs:
       - name: Build artifacts
         run: |
           mkdir subdir
-          for i in {1..150}
+          for i in {1..250}
           do
             echo $i > artifact-${i}.bin
             date >> artifact-${i}.bin
           done
       - name: Attest artifact
-        uses: actions/attest@main
+        uses: actions/attest@bdehamer/exponential-backoff
         env:
           INPUT_PRIVATE-SIGNING: 'true'
         with:
