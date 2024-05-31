@@ -1,0 +1,43 @@
+name: War and Peace
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  attest-sbom:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    env:
+      SOURCE: https://www.gutenberg.org/ebooks/2600.txt.utf-8
+      SUBJECT_PATH: war-and-peace.txt
+      PREDICATE_PATH: predicate.json
+
+    steps:
+
+      - name: Download War and Peace
+        run: |
+          wget ${{ env.SOURCE }} --output-document ${{ env.SUBJECT_PATH }}
+
+      - name: Create Predicate
+        run: |
+          jq --null-input \
+            --rawfile sub ${{ env.SUBJECT_PATH }} \
+            '[$sub, $sub, $sub, $sub]' > ${{ env.PREDICATE_PATH }}
+
+      - name: Attest Predicate
+        id: attest
+        uses: actions/attest@v1
+        with:
+          subject-path: ${{ env.SUBJECT_PATH }}
+          predicate-type: "text/plain"
+          predicate-path: ${{ env.PREDICATE_PATH }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: attestation.json
+          path: ${{ steps.attest.outputs.bundle-path }}
