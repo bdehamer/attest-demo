@@ -1,0 +1,81 @@
+name: Attest Image stored AWS ECR
+
+on:
+  workflow_dispatch:
+    inputs:
+      buildx:
+        description: 'Use docker buildx'
+        type: boolean
+        required: false
+        default: true
+
+jobs:
+  build-image-gar:
+    name: Build & Attest
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      attestations: write
+    steps:
+      - name: Build artifact
+        run: date > artifact.bin
+
+      - name: Build Dockerfile
+        run: |
+          cat <<EOF > Dockerfile
+          FROM scratch
+          COPY artifact.bin .
+          EOF
+
+      - name: Set up QEMU
+        if: inputs.buildx
+        uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
+
+      - name: Set up Docker Buildx
+        if: inputs.buildx
+        uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb # v3.3.0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          managed-session-policies: arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser
+          role-to-assume: ${{ secrets.AWS_GHA_ROLE }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
+
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@v5.0.0
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.REPO_NAME }}
+          IMAGE_TAG: ${{ steps.get-commit-hash.outputs.commit-hash }}-${{ steps.get-timestamp.outputs.timestamp }}
+        with:
+          context: .
+          push: true
+          tags: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+
+      - name: Attest artifact
+        uses: actions/attest-build-provenance@49df96e17e918a15956db358890b08e61c704919 # v1.2.0
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+  # verify-with-policy-tester:
+  #   name: Verify with Policy Tester
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout policy controller code
+  #       uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+  #       with:
+  #         repository: 'github/policy-controller'
+  #         ref: 'release'
+  #     - name: Build policy Tester
+  #       run: |
+  #         make -policy-tester
+  #     - name: Run Policy Tester
+  #       run: |
+  #         ./policy-tester -policy-file policy.json -attestation-file attestation.json
