@@ -57,8 +57,17 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
       - name: Attest artifact
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest@bdehamer/oci-0.3.5
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.push.outputs.digest }}
+          predicate-type: application/json
+          predicate: ${{ toJson(github) }}
           push-to-registry: true
+
+      #- name: Attest artifact
+        #uses: actions/attest-build-provenance@v1
+        #with:
+          #subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          #subject-digest: ${{ steps.push.outputs.digest }}
+          #push-to-registry: true
