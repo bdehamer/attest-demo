@@ -21,7 +21,7 @@ jobs:
             date >> artifact-${i}.bin
           done
       - name: Attest artifact
-        uses: actions/attest@v1.2.0
+        uses: actions/attest@v1
         env:
           INPUT_PRIVATE-SIGNING: 'true'
         with:
