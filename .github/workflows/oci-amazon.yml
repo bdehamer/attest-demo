@@ -65,4 +65,4 @@ jobs:
 
       - name: Fetch artifact index
         run: |
-          oras discover --format json ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest | jq
+          oras discover --distribution-spec v1.1-referrers-tag --format json ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest | jq
