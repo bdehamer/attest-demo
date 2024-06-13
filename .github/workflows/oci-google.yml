@@ -61,7 +61,7 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
       - name: Attest artifact
-        uses: actions/attest@bdehamer/hack
+        uses: actions/attest@v1
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.push.outputs.digest }}
@@ -74,3 +74,7 @@ jobs:
           DIGEST: ${{ steps.push.outputs.digest }}
         run: |
           oras manifest fetch ${REGISTRY}/${IMAGE_NAME}:${DIGEST/:/-} | jq
+
+      - name: Fetch artifact index
+        run: |
+          oras discover --format json ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest | jq
