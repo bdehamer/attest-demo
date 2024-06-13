@@ -18,7 +18,7 @@ jobs:
       attestations: write
     env:
       REGISTRY: 123509514931.dkr.ecr.us-east-1.amazonaws.com
-      IMAGE_NAME: github/trust-metadata-demo
+      IMAGE_NAME: bdehamer/attest-demo
     steps:
       - name: Build artifact
         run: date > artifact.bin
