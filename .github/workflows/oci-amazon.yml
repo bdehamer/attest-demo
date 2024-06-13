@@ -63,3 +63,8 @@ jobs:
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
+      - name: Fetch artifact index
+        env:
+          DIGEST: ${{ steps.push.outputs.digest }}
+        run: |
+          oras manifest fetch ${REGISTRY}/${IMAGE_NAME}:${DIGEST/:/-} | jq
