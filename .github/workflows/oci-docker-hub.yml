@@ -18,7 +18,7 @@ jobs:
       attestations: write
     env:
       REGISTRY: docker.io
-      IMAGE_NAME: bdehamer/attest-demo
+      IMAGE_NAME: ${{ github.repository }}
     steps:
       - name: Build artifact
         run: date > artifact.bin

@@ -18,7 +18,7 @@ jobs:
       attestations: write
     env:
       REGISTRY: 123509514931.dkr.ecr.us-east-1.amazonaws.com
-      IMAGE_NAME: bdehamer/attest-demo
+      IMAGE_NAME: ${{ github.repository }}
     steps:
       - name: Build artifact
         run: date > artifact.bin
@@ -57,17 +57,9 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
       - name: Attest artifact
-        uses: actions/attest@v1
+        uses: actions/attest-build-provenance@v1
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.push.outputs.digest }}
-          predicate-type: application/json
-          predicate: ${{ toJson(github) }}
           push-to-registry: true
 
-      #- name: Attest artifact
-        #uses: actions/attest-build-provenance@v1
-        #with:
-          #subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          #subject-digest: ${{ steps.push.outputs.digest }}
-          #push-to-registry: true
