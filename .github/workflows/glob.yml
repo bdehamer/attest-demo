@@ -21,10 +21,12 @@ jobs:
             date >> artifact-${i}.bin
           done
       - name: Attest artifact
-        uses: actions/attest@v1
+        uses: actions/attest@main
         env:
           INPUT_PRIVATE-SIGNING: 'true'
         with:
-          subject-path: '**/artifact-*'
+          subject-path: |
+            **/artifact-2??.bin
+            !**/artifact-2[0-3]?.bin
           predicate-type: 'text/plain'
           predicate: '{}'
