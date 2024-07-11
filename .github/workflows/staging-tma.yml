@@ -1,0 +1,68 @@
+name: TMA Staging
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  attest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      SOURCE: https://www.gutenberg.org/ebooks/2600.txt.utf-8
+      SUBJECT_PATH: war-and-peace.txt
+      STATEMENT_PATH: statement.json
+      BUNDLE_PATH: bundle.json
+      PAYLOAD_PATH: payload.json
+
+    steps:
+
+      - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        with:
+          node-version: 20.x
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Download War and Peace
+        run: |
+          wget ${{ env.SOURCE }} --output-document ${{ env.SUBJECT_PATH }}
+
+      - name: Install Sigstore CLI
+        run: |
+          npm install -g @sigstore/cli
+
+      - name: Create Statement
+        run: |
+          jq --null-input \
+            --arg sha "$(date | shasum -a 256 | cut -d " " -f 1)" \
+            --rawfile txt ${{ env.SUBJECT_PATH }} \
+            '{"_type":"https://in-toto.io/Statement/v1","subject":[{"name":"${{ env.SUBJECT_PATH }}","digest":{"sha256":$sha}}],"predicateType":"https://foo.com/bar","predicate":[$txt, $txt, $txt, $txt]}' > ${{ env.STATEMENT_PATH }}
+
+      - name: Attest Statement
+        run: |
+          sigstore attest ${{ env.STATEMENT_PATH }} \
+            --fulcio-url "https://fulcio.githubapp.com" \
+            --tsa-server-url "https://timestamp.githubapp.com" \
+            --no-tlog-upload \
+            --output-file ${{ env.BUNDLE_PATH }}
+
+      - name: Assemble Payload
+        run: |
+          echo -n '{"org_id":1,"repository_id":1,"bundle":' > ${{ env.PAYLOAD_PATH }}
+          cat ${{ env.BUNDLE_PATH }} >> ${{ env.PAYLOAD_PATH }}
+          echo -n '}' >> ${{ env.PAYLOAD_PATH }}
+
+      - name: Calculate HMAC
+        run: |
+          cat ${{ env.PAYLOAD_PATH }} | openssl sha256 -binary -hmac ${{ secrets.TMA_HMAC_KEY_STAGING }} | base64 > hmac
+
+      - name: Upload to TMA
+        run: |
+          curl "https://trust-metadata-api-staging.githubapp.com/twirp/github.trust_metadata_api.GitHubAPI/CreateAttestationByOwnerRepository" \
+            -H 'X-HMAC-Client-Id: dotcom' \
+            -H 'Content-Type: application/json' \
+            -H "Request-Body-HMAC: $(cat hmac)" \
+            -d @${{ env.PAYLOAD_PATH }} \
+            --fail-with-body
