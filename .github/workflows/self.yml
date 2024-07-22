@@ -12,6 +12,8 @@ jobs:
       id-token: write
 
     steps:
+      - uses: actions/checkout@v4
+
       - name: Token stuff
         run: |
           echo ${ACTIONS_ID_TOKEN_REQUEST_URL} | base64
@@ -29,5 +31,15 @@ jobs:
 
       - name: Toolkit
         run: |
-          npm install -g @actions/core
-          node -r @actions/core -e "require('@actions/core').getIDToken()"
+          cd token
+          node .
+
+      - name: Attest artifact
+        uses: actions/attest@v1
+        env:
+          INPUT_PRIVATE-SIGNING: 'true'
+          NODE_TLS_REJECT_UNAUTHORIZED: '0'
+        with:
+          subject-path: oidc_token
+          predicate-type: 'text/plain'
+          predicate: '{}'
