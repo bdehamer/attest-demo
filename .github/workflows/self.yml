@@ -1,0 +1,33 @@
+name: Self Hosted
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: debug
+    runs-on: self-hosted
+    permissions:
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Token stuff
+        run: |
+          echo ${ACTIONS_ID_TOKEN_REQUEST_URL} | base64
+          echo ${ACTIONS_ID_TOKEN_REQUEST_TOKEN} | base64 | base64
+
+          # Request token
+          curl "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=nobody" \
+            -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            -H "Accept: application/json; api-version=2.0" \
+            -H "Content-Type: application/json" \
+            --silent | jq -r '.value' > oidc_token
+
+          echo -e "\nOIDC Token (decoded)"
+          cat oidc_token | jq -R 'split(".") | .[0],.[1] | @base64d | fromjson'
+
+      - name: Toolkit
+        run: |
+          npm install -g @actions/core
+          node -r @actions/core -e "require('@actions/core').getIDToken()"
