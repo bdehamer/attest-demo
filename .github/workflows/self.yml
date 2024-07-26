@@ -29,17 +29,4 @@ jobs:
           echo -e "\nOIDC Token (decoded)"
           cat oidc_token | jq -R 'split(".") | .[0],.[1] | @base64d | fromjson'
 
-      - name: Toolkit
-        run: |
-          cd token
-          node .
-
-      - name: Attest artifact
-        uses: actions/attest@v1
-        env:
-          INPUT_PRIVATE-SIGNING: 'true'
-          NODE_TLS_REJECT_UNAUTHORIZED: '0'
-        with:
-          subject-path: oidc_token
-          predicate-type: 'text/plain'
-          predicate: '{}'
+      - uses: bdehamer/oidc-test@main
