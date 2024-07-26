@@ -30,3 +30,12 @@ jobs:
           cat oidc_token | jq -R 'split(".") | .[0],.[1] | @base64d | fromjson'
 
       - uses: bdehamer/oidc-test@main
+
+      - uses: actions/attest@v1
+        env:
+          INPUT_PRIVATE-SIGNING: "true"
+        with:
+          subject-path: README.md
+          predicate-type: "text/plain"
+          predicate: "{}"
+
