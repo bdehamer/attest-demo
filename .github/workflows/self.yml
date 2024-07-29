@@ -31,11 +31,9 @@ jobs:
 
       - uses: bdehamer/oidc-test@main
 
-      - uses: actions/attest@v1
+      - uses: actions/attest-build-provenance@test
         env:
           INPUT_PRIVATE-SIGNING: "true"
         with:
           subject-path: README.md
-          predicate-type: "text/plain"
-          predicate: "{}"
 
