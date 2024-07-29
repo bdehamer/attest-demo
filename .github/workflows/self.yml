@@ -29,8 +29,6 @@ jobs:
           echo -e "\nOIDC Token (decoded)"
           cat oidc_token | jq -R 'split(".") | .[0],.[1] | @base64d | fromjson'
 
-      - uses: bdehamer/oidc-test@main
-
       - uses: actions/attest-build-provenance@test
         env:
           INPUT_PRIVATE-SIGNING: "true"
