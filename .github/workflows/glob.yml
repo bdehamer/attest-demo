@@ -30,3 +30,4 @@ jobs:
             !**/artifact-2[0-3]?.bin
           predicate-type: 'text/plain'
           predicate: '{}'
+          show-summary: false
