@@ -1,0 +1,25 @@
+{
+  "name": "attest-demo",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "This repository demonstrates the use of the [`actions/attest-build-provenance`][1] and [`actions/attest-sbom`][2] actions to generate attestations for software artifacts built with GitHub Actions.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bdehamer/attest-demo.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bdehamer/attest-demo/issues"
+  },
+  "homepage": "https://github.com/bdehamer/attest-demo#readme",
+  "dependencies": {
+    "@actions/attest": "^1.4.1",
+    "@sigstore/bundle": "^2.3.2",
+    "@sigstore/sign": "^2.3.2"
+  }
+}
