@@ -12,6 +12,7 @@ jobs:
       id-token: write
 
     steps:
+      - uses: hmarr/debug-action@v2
       - name: Build artifacts
         run: |
           mkdir subdir
