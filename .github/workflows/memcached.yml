@@ -71,7 +71,7 @@ jobs:
 
       - name: Attest artifact
         env:
-          INPUT_PRIVATE-SIGNING: "true"
+          INPUT_PRIVATE-SIGNING: "false"
         uses: actions/attest-build-provenance@v1
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
