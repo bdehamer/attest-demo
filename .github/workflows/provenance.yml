@@ -28,3 +28,14 @@ jobs:
           EOF
 
           cat pred | jq '{"predicateType": .type,"predicate": .params}'
+
+      - name: trust root
+        env:
+          TUF_URL: 'https://github.github.com/staging-tuf-root'
+        run: |
+           # Bootstrap root metadata (unsafe)
+           wget --quiet ${TUF_URL}/1.root.json
+
+           gh attestation trusted-root \
+             --tuf-url ${TUF_URL} \
+             --tuf-root ./1.root.json > ./trusted_root.jsonl
