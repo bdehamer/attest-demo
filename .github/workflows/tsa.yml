@@ -1,0 +1,47 @@
+---
+name: TSA
+on: workflow_dispatch
+permissions: {}
+
+jobs:
+  probe-tsa:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create artifact
+        run: |
+          date > artifact
+
+      - name: Digest artifact
+        run: |
+          # SHA256 digest in base64
+          cat artifact | shasum -a 256 | \
+            cut -d ' ' -f 1 | xxd -revert -plain | base64 > digest
+
+      - name: Request timestamp
+        run: |
+          jq --raw-input \
+            '{"hashAlgorithm":"sha256","certificates":true,"artifactHash":.}' \
+            digest > payload.json
+
+          curl --silent --fail-with-body \
+            --header "Content-Type: application/json" \
+            --data @payload.json \
+            --output response.tsr \
+            "https://timestamp.githubapp.com/api/v1/timestamp"
+
+      - name: Dump timestamp
+        run: |
+          openssl ts -reply -in response.tsr -text
+
+      - name: Get certificate chain
+        run: |
+          curl --silent --fail-with-body \
+            --output certchain.pem \
+            "https://timestamp.githubapp.com/api/v1/timestamp/certchain"
+
+      - name: Verify timestamp
+        run: |
+          openssl ts -verify \
+            -data ./artifact \
+            -in ./response.tsr \
+            -CAfile ./certchain.pem
