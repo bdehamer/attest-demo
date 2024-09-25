@@ -1,0 +1,55 @@
+---
+name: Fulcio
+on: workflow_dispatch
+permissions: {}
+
+jobs:
+  probe-tsa:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Create keypair
+        run: |
+          openssl ecparam -genkey -name prime256v1 > ec_private.pem
+          openssl ec -in ec_private.pem -pubout > ec_public.pem
+
+      - name: Get OIDC token
+        run: |
+          curl --silent \
+            --header "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            --header "Accept: application/json; api-version=2.0" \
+            --header "Content-Type: application/json" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sigstore" | \
+            jq --raw-output '.value' > id_token
+
+      - name: Compute proof-of-possession
+        run: |
+          jq --raw-input --raw-output --join-output \
+            'split(".") | .[1] | @base64d | fromjson | .sub' id_token > subject
+
+          cat subject |
+            openssl dgst -sha256 -sign ec_private.pem |
+            base64 --wrap 0 > pop
+
+      - name: Request certificate
+        run: |
+          jq --null-input \
+            --arg id_token "$(cat id_token)" \
+            --arg key "$(cat ec_public.pem)" \
+            --arg pop "$(cat pop)" \
+            '{"credentials":{"oidcIdentityToken":$id_token},"publicKeyRequest":{"publicKey":{"algorithm":"ECDSA","content":$key},"proofOfPossession":$pop}}' > payload.json
+
+          curl --silent \
+            --header "Content-Type: application/json" \
+            --data @payload.json \
+            --output response.json \
+            "https://fulcio.githubapp.com/api/v2/signingCert"
+
+      - name: Dump certificate
+        run: |
+          jq --raw-output \
+            '.signedCertificateDetachedSct.chain.certificates[0]' \
+            response.json > leaf.pem
+
+          cat leaf.pem | openssl x509 -text
