@@ -40,11 +40,11 @@ jobs:
             --arg pop "$(cat pop)" \
             '{"credentials":{"oidcIdentityToken":$id_token},"publicKeyRequest":{"publicKey":{"algorithm":"ECDSA","content":$key},"proofOfPossession":$pop}}' > payload.json
 
-          curl --silent \
+          curl --silent --fail-with-body \
             --header "Content-Type: application/json" \
             --data @payload.json \
-            --output response.json \
-            "https://fulcio.githubapp.com/api/v2/signingCert"
+            "https://fulcio.githubapp.com/api/v2/signingCert" |
+              tee response.json
 
       - name: Dump certificate
         run: |

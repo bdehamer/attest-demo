@@ -14,7 +14,7 @@ jobs:
       - name: Digest artifact
         run: |
           # SHA256 digest in base64
-          cat artifact | shasum -a 256 | \
+          cat artifact | shasum -a 256 |
             cut -d ' ' -f 1 | xxd -revert -plain | base64 > digest
 
       - name: Request timestamp
@@ -26,8 +26,8 @@ jobs:
           curl --silent --fail-with-body \
             --header "Content-Type: application/json" \
             --data @payload.json \
-            --output response.tsr \
-            "https://timestamp.githubapp.com/api/v1/timestamp"
+            "https://timestamp.githubapp.com/api/v1/timestamp" |
+              tee response.tsr
 
       - name: Dump timestamp
         run: |
