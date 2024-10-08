@@ -1,6 +1,6 @@
 ---
 name: Fulcio
-on: workflow_dispatch
+"on": workflow_dispatch
 permissions: {}
 
 jobs:
@@ -53,3 +53,16 @@ jobs:
             response.json > leaf.pem
 
           cat leaf.pem | openssl x509 -text
+
+      - name: Get trust bundle
+        run: |
+          curl --silent --fail-with-body \
+            https://fulcio.githubapp.com/api/v2/trustBundle |
+              tee trust-bundle.json
+
+          jq --raw-output '.chains[0].certificates | join("")' \
+            trust-bundle.json > ca.pem
+
+      - name: Verify certificate
+        run: |
+          openssl verify -CAfile ca.pem leaf.pem
