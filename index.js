@@ -51,10 +51,15 @@ const main = async () => {
     digest: { 'sha256': '40d117f04fa3970c2c852d2c6e0f5a9876fa8eb1c2e6ee6abe58bef58a7aa93a' }
   }
 
+  const sub3 = {
+    name: 'empty.json',
+    digest: { 'sha256': '44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a' }
+  }
+
 
   const statement = {
     "_type": "https://in-toto.io/Statement/v1",
-    subject: [ sub1, sub2 ],
+    subject: [ sub1, sub2, sub3 ],
     predicateType: "https://in-toto.io/attestation/release/v0.1",
     predicate: predicate
   }
