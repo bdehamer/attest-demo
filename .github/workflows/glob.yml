@@ -22,7 +22,7 @@ jobs:
             date >> artifact-${i}.bin
           done
       - name: Attest artifact
-        uses: actions/attest@main
+        uses: actions/attest@bdehamer/multi-subject
         env:
           INPUT_PRIVATE-SIGNING: 'true'
         with:
