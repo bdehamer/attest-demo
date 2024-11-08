@@ -13,6 +13,9 @@ jobs:
 
     steps:
       - uses: hmarr/debug-action@v2
+      - name: snap
+        run: |
+          sudo snap search snappy
       - name: Build artifacts
         run: |
           mkdir subdir
@@ -22,7 +25,7 @@ jobs:
             date >> artifact-${i}.bin
           done
       - name: Attest artifact
-        uses: actions/attest@bdehamer/multi-subject
+        uses: actions/attest@main
         env:
           INPUT_PRIVATE-SIGNING: 'true'
         with:
