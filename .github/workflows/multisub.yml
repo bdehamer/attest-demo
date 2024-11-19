@@ -1,3 +1,4 @@
+---
 name: Multi-Subject
 
 on:
@@ -15,12 +16,31 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+      - uses: actions/setup-go@v5
         with:
-          node-version: 20.x
-          registry-url: 'https://registry.npmjs.org'
+          go-version-file: './go.mod'
 
-      - name: Testing 
+      - name: Build
         run: |
-          npm install
-          node .
+          GOOS=linux GOARCH=amd64 go build -o hello_linux_amd64
+          GOOS=linux GOARCH=arm64 go build -o hello_linux_arm64
+          GOOS=darwin GOARCH=amd64 go build -o hello_macos_amd64
+          GOOS=darwin GOARCH=arm64 go build -o hello_macos_arm64
+          GOOS=windows GOARCH=amd64 go build -o hello_windows_amd64.exe
+          GOOS=windows GOARCH=arm64 go build -o hello_windows_arm64.exe
+
+      - name: Attest
+        uses: actions/attest-build-provenance@bdehamer/demo
+        with:
+          subject-path: hello_*
+
+      - name: Verify
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh attestation verify ./hello_linux_arm64 \
+            --owner ${{ github.repository_owner }}
+          gh attestation verify ./hello_macos_arm64 \
+            --owner ${{ github.repository_owner }}
+          gh attestation verify ./hello_windows_arm64.exe \
+            --owner ${{ github.repository_owner }}
