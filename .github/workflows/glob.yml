@@ -19,7 +19,7 @@ jobs:
       - name: Build artifacts
         run: |
           mkdir subdir
-          for i in {1..250}
+          for i in {1..500}
           do
             echo $i > artifact-${i}.bin
             date >> artifact-${i}.bin
@@ -30,7 +30,6 @@ jobs:
           INPUT_PRIVATE-SIGNING: 'true'
         with:
           subject-path: |
-            **/artifact-2??.bin
-            !**/artifact-2[0-3]?.bin
+            **/artifact-*.bin
           predicate-type: 'text/plain'
           predicate: '{}'
