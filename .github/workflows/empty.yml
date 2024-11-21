@@ -1,0 +1,22 @@
+---
+name: Empty Sub name
+"on":
+  workflow_dispatch:
+permissions: {}
+jobs:
+  attest-sbom:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4.0.2
+        with:
+          node-version: 20.x
+          registry-url: 'https://registry.npmjs.org'
+      - name: Testing
+        run: |
+          npm install
+          node .
