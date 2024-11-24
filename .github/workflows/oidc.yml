@@ -18,3 +18,15 @@ jobs:
             --silent | jq -r '.value' > oidc_token
           echo -e "\nOIDC Token (decoded)"
           cat oidc_token | jq -R 'split(".") | .[0],.[1] | @base64d | fromjson'
+      - name: IP
+        run: curl --silent https://api.ipify.org
+      - name: IP
+        run: curl --silent https://api.ipify.org
+      - name: IP
+        run: curl --silent https://api.ipify.org
+      - name: IP
+        run: curl --silent https://api.ipify.org
+      - name: IP
+        run: curl --silent https://api.ipify.org
+      - name: IP
+        run: curl --silent https://api.ipify.org
