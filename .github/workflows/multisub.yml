@@ -30,7 +30,7 @@ jobs:
           GOOS=windows GOARCH=arm64 go build -o hello_windows_arm64.exe
 
       - name: Attest
-        uses: actions/attest-build-provenance@bdehamer/demo
+        uses: actions/attest-build-provenance@v2.0.0
         with:
           subject-path: hello_*
 
