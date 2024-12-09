@@ -30,9 +30,16 @@ jobs:
           GOOS=windows GOARCH=arm64 go build -o hello_windows_arm64.exe
 
       - name: Attest
-        uses: actions/attest-build-provenance@v2.0.0
+        id: attest
+        uses: actions/attest-build-provenance@v2
         with:
           subject-path: hello_*
+
+      - name: Dump outputs
+        run: |
+          echo "${{ steps.attest.outputs.attestation-id }}"
+          echo "${{ steps.attest.outputs.attestation-url }}"
+          echo "${{ steps.attest.outputs.bundle-path }}"
 
       - name: Verify
         env:
