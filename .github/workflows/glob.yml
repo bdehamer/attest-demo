@@ -25,6 +25,7 @@ jobs:
             date >> artifact-${i}.bin
           done
       - name: Attest artifact
+        id: attest
         uses: actions/attest@main
         env:
           INPUT_PRIVATE-SIGNING: 'true'
@@ -33,3 +34,7 @@ jobs:
             **/artifact-*.bin
           predicate-type: 'text/plain'
           predicate: '{}'
+      - name: Check output
+        run: |
+          echo "${{ steps.attest.outputs.attestation-id }}"
+          echo "${{ steps.attest.outputs.attestation-url }}"
