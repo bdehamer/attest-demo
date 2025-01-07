@@ -1,0 +1,39 @@
+name: Checksums
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: attest many subjects
+    runs-on: ubuntu-latest
+    permissions:
+      attestations: write
+      id-token: write
+
+    steps:
+      - uses: hmarr/debug-action@v2
+      - name: Build artifacts
+        run: |
+          for i in {1..25}
+          do
+            echo $i > artifact-${i}.bin
+            date >> artifact-${i}.bin
+          done
+      - name: Digest artifacts
+        run: |
+          shasum -a 256 artifact-*.bin > subject.checksums.txt
+          cat subject.checksums.txt
+      - name: Attest artifact
+        id: attest
+        uses: actions/attest@bdehamer/subject-checksums
+        env:
+          INPUT_PRIVATE-SIGNING: 'true'
+        with:
+          subject-checksums: subject.checksums.txt
+          predicate-type: 'text/plain'
+          predicate: '{}'
+      - name: Check output
+        run: |
+          echo "${{ steps.attest.outputs.attestation-id }}"
+          echo "${{ steps.attest.outputs.attestation-url }}"
