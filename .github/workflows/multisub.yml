@@ -38,17 +38,15 @@ jobs:
           version: "~> v2"
           args: release --clean
 
+      - name: Dump checksums
+        run: |
+          cat dist/attest-demo_checksums.txt
+
       - name: Attest
         id: attest
         uses: actions/attest-build-provenance@v2
         with:
-          subject-path: dist/**/attest-demo*
-
-      - name: Dump outputs
-        run: |
-          echo "${{ steps.attest.outputs.attestation-id }}"
-          echo "${{ steps.attest.outputs.attestation-url }}"
-          echo "${{ steps.attest.outputs.bundle-path }}"
+          subject-checksums: dist/attest-demo_checksums.txt
 
       - name: Verify
         env:
