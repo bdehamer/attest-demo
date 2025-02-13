@@ -13,27 +13,13 @@ jobs:
 
     steps:
       - uses: hmarr/debug-action@v2
-      - name: Build artifacts
-        run: |
-          for i in {1..25}
-          do
-            echo $i > artifact-${i}.bin
-            date >> artifact-${i}.bin
-          done
-      - name: Digest artifacts
-        run: |
-          shasum -a 256 artifact-*.bin > subject.checksums.txt
-          cat subject.checksums.txt
+      - uses: actions/checkout@v4
       - name: Attest artifact
         id: attest
-        uses: actions/attest@bdehamer/subject-checksums
+        uses: actions/attest@bdehamer/del
         env:
           INPUT_PRIVATE-SIGNING: 'true'
         with:
-          subject-checksums: subject.checksums.txt
-          predicate-type: 'text/plain'
-          predicate: '{}'
-      - name: Check output
-        run: |
-          echo "${{ steps.attest.outputs.attestation-id }}"
-          echo "${{ steps.attest.outputs.attestation-url }}"
+          subject-checksums: checksums.txt
+          predicate-type: 'https://in-toto.io/attestation/release/v0.1'
+          predicate: '{"purl":"pkg:github-release/cli/cli@v2.67.0","repositoryId":"212613049","releaseId":"199700588"}'
