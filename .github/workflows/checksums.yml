@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Attest artifact
         id: attest
-        uses: actions/attest@bdehamer/del
+        uses: actions/attest@v2
         env:
           INPUT_PRIVATE-SIGNING: 'true'
         with:
