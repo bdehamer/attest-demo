@@ -50,7 +50,7 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
       - name: Attest artifact
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@experimental/header-auth
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.push.outputs.digest }}
