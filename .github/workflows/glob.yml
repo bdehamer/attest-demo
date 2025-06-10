@@ -13,17 +13,10 @@ jobs:
 
     steps:
       - uses: hmarr/debug-action@v2
-      - name: snap
-        run: |
-          sudo snap search snappy
       - name: Build artifacts
         run: |
-          mkdir subdir
-          for i in {1..1024}
-          do
-            echo $i > artifact-${i}.bin
-            date >> artifact-${i}.bin
-          done
+          date >> .artifact1
+          date >> .artifact2
       - name: Attest artifact
         id: attest
         uses: actions/attest@main
@@ -31,7 +24,7 @@ jobs:
           INPUT_PRIVATE-SIGNING: 'true'
         with:
           subject-path: |
-            **/artifact-*.bin
+            *
           predicate-type: 'text/plain'
           predicate: '{}'
       - name: Check output
