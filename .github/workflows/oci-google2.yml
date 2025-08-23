@@ -19,7 +19,6 @@ jobs:
     env:
       REGISTRY: us-west1-docker.pkg.dev
       IMAGE_NAME: dehamer24/${{ github.repository }}
-      NODE_OPTIONS: "--max-http-header-size=32768"
     steps:
       - name: Build artifact
         run: date > artifact.bin
@@ -61,7 +60,7 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
       - name: Attest artifact
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@bdehamer/node-max-http-header-size
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.push.outputs.digest }}
