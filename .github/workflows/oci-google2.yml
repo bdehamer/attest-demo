@@ -19,6 +19,7 @@ jobs:
     env:
       REGISTRY: us-west1-docker.pkg.dev
       IMAGE_NAME: dehamer24/${{ github.repository }}
+      NODE_OPTIONS: "--max-http-header-size=32768"
     steps:
       - name: Build artifact
         run: date > artifact.bin
