@@ -28,7 +28,7 @@ jobs:
               build-essential \
               cmake \
               && rm -rf /var/lib/apt/lists/*
-          COPY artifact.bin .
+          COPY README.md .
           EOF
 
       - name: Login to Docker Hub
