@@ -31,6 +31,15 @@ jobs:
           COPY README.md .
           EOF
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          role-to-assume: arn:aws:iam::123509514931:role/GitHubAction-AssumeRole
+          managed-session-policies: arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -51,6 +60,7 @@ jobs:
           images: |
             ${{ env.IMAGE_NAME }}
             ghcr.io/${{ env.IMAGE_NAME }}
+            123509514931.dkr.ecr.us-east-1.amazonaws.com/${{ env.IMAGE_NAME }}
 
       - name: Dump
         run: |
