@@ -1,4 +1,4 @@
-name: Attest Image (GH Container Registry)
+name: Attest Image (Multi-Registry)
 
 on:
   workflow_dispatch:
