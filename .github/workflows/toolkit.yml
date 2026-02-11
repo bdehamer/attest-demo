@@ -1,0 +1,41 @@
+name: SLSA Build Provenance
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  attest:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        with:
+          node-version: 20.x
+
+      - name: Install Sigstore CLI
+        run: |
+          npm install '@actions/attest'
+
+      - name: Install Sigstore CLI
+        run: |
+          npm ls
+          cat << EOF | node --require '@actions/attest' | tail -n +3 > pred
+          const { buildSLSAProvenancePredicate } = require('@actions/attest');
+          (async () => buildSLSAProvenancePredicate().then(p => console.log(JSON.stringify(p))))();
+          EOF
+
+          cat pred | jq '{"predicateType": .type,"predicate": .params}'
+
+      - name: trust root
+        env:
+          TUF_URL: 'https://github.github.com/staging-tuf-root'
+        run: |
+           # Bootstrap root metadata (unsafe)
+           wget --quiet ${TUF_URL}/1.root.json
+
+           gh attestation trusted-root \
+             --tuf-url ${TUF_URL} \
+             --tuf-root ./1.root.json > ./trusted_root.jsonl
