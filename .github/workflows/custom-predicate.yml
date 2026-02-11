@@ -1,0 +1,70 @@
+name: Custom Predicate
+
+on:
+  workflow_dispatch:
+    inputs:
+      private-signing:
+        description: "Use private signing"
+        type: boolean
+        default: true
+      predicate-source:
+        description: "How to supply the predicate"
+        type: choice
+        options:
+          - file
+          - literal
+        default: file
+      show-summary:
+        description: "Show attestation summary"
+        type: boolean
+        default: true
+
+jobs:
+  build:
+    name: attest
+    runs-on: ubuntu-latest
+    permissions:
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Create subject
+        run: |
+          echo "$RANDOM-$(date +%s)-$(uuidgen)" > subject.txt
+
+      - name: Create predicate (file)
+        id: predicate
+        run: |
+          cat > predicate.json << 'EOF'
+          {
+            "result": "PASSED",
+            "configuration": {},
+            "passedTests": ["unit-tests"]
+          }
+          EOF
+
+          echo "json=$(cat predicate.json | jq -c .)" >> "$GITHUB_OUTPUT"
+
+      - name: Attest artifact (file)
+        if: inputs.predicate-source == 'file'
+        id: attest-file
+        uses: actions/attest@bdehamer/consolidate
+        env:
+          INPUT_PRIVATE-SIGNING: ${{ inputs.private-signing }}
+        with:
+          subject-path: subject.txt
+          predicate-type: "https://in-toto.io/attestation/test-result/v0.1"
+          predicate-path: predicate.json
+          show-summary: ${{ inputs.show-summary }}
+
+      - name: Attest artifact (literal)
+        if: inputs.predicate-source == 'literal'
+        id: attest-literal
+        uses: actions/attest@bdehamer/consolidate
+        env:
+          INPUT_PRIVATE-SIGNING: ${{ inputs.private-signing }}
+        with:
+          subject-path: subject.txt
+          predicate-type: "https://in-toto.io/attestation/test-result/v0.1"
+          predicate: ${{ steps.predicate.outputs.json }}
+          show-summary: ${{ inputs.show-summary }}
