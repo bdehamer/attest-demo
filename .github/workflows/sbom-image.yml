@@ -1,0 +1,80 @@
+name: Container Image SBOM
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'tag to apply to image'
+        type: string
+        required: false
+        default: latest
+
+jobs:
+  build-publish:
+    runs-on: ubuntu-22.04
+    permissions:
+      attestations: write
+      contents: write
+      id-token: write
+      packages: write
+    env:
+      QBITTORRENT_VERSION: "4.6.5"
+      REGISTRY: "ghcr.io"
+      IMAGE_NAME: ${{ github.repository }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          labels: |
+            org.opencontainers.image.description=hi
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=${{ env.QBITTORRENT_VERSION }}
+          tags: |
+            type=raw,value=${{ inputs.image_tag }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb # v3
+
+      - name: Log in to the registry
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build image
+        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5
+        id: build
+        with:
+          build-args: QBITTORRENT_VERSION=${{ env.QBITTORRENT_VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          context: .
+          platforms: linux/amd64
+          provenance: false
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@e8d2a6937ecead383dfe75190d104edd1f9c5751 # v0
+        with:
+          artifact-name: ${{ inputs.image_tag }}.sbom.spdx.json
+          format: spdx-json
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
+          output-file: ${{ inputs.image_tag }}.sbom.spdx.json
+          upload-artifact: true
+          upload-release-assets: false
+
+      - name: Upload SBOM attestation
+        uses: actions/attest-sbom@bdehamer/detached-sbom
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          sbom-path: ${{ inputs.image_tag }}.sbom.spdx.json
+          push-to-registry: true
