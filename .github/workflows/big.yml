@@ -1,13 +1,21 @@
-name: Big SBOM Test
+name: Large Attestation
 
 on:
   workflow_dispatch:
     inputs:
       size:
-        description: 'SBOM size in MB'
+        description: "Predicate size in MB"
         type: string
         required: true
-        default: 1
+        default: "1"
+      private-signing:
+        description: "Use private signing"
+        type: boolean
+        default: true
+      show-summary:
+        description: "Show attestation summary"
+        type: boolean
+        default: true
 
 permissions: {}
 
@@ -20,16 +28,34 @@ jobs:
       attestations: write
 
     steps:
-      - name: Create SBOM
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Debug
+        uses: ./.github/actions/debug
+
+      - name: Create predicate
+        id: create-predicate
         run: |
           dd if=/dev/zero of=output.dat bs=${{ inputs.size }}M count=1
           cat output.dat | base64 > payload.dat
           jq --null-input --rawfile payload payload.dat '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","payload":$payload}' > sbom.json
-      - name: Attest SBOM
-        uses: actions/attest-sbom@v2
-        env:
-          INPUT_PRIVATE-SIGNING: 'true'
+
+          echo "digest=sha256:$(sha256sum payload.dat | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
+      - name: Attest
+        id: attest
+        uses: ./.github/actions/attest
         with:
-          subject-digest: 'sha256:7d070f6b64d9bcc530fe99cc21eaaa4b3c364e0b2d367d7735671fa202a03b32'
-          subject-name: 'subject'
-          sbom-path: 'sbom.json'
+          subject-name: "subject"
+          subject-digest: ${{ steps.create-predicate.outputs.digest }}
+          sbom-path: "sbom.json"
+          private-signing: ${{ inputs.private-signing }}
+          show-summary: ${{ inputs.show-summary }}
+
+      - name: Check output
+        run: |
+          echo "attestation-id:  ${{ steps.attest.outputs.attestation-id }}"
+          echo "attestation-url: ${{ steps.attest.outputs.attestation-url }}"
+          echo "bundle-path:     ${{ steps.attest.outputs.bundle-path }}"
+          cat ${RUNNER_TEMP}/created_attestation_paths.txt

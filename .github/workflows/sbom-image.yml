@@ -21,13 +21,21 @@ jobs:
     name: attest
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       attestations: write
       id-token: write
       packages: write
     env:
       REGISTRY: "ghcr.io"
       IMAGE_NAME: "bdehamer/memcached"
+      SBOM_FILE: "memcached.sbom.spdx.json"
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Debug
+        uses: ./.github/actions/debug
+
       - name: Create subject
         run: |
           echo "$RANDOM-$(date +%s)-$(uuidgen)" > artifact.txt
@@ -68,17 +76,33 @@ jobs:
           artifact-name: memcached-${{ github.run_id }}.sbom.spdx.json
           format: spdx-json
           image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.run_id }}
-          output-file: memcached-${{ github.run_id }}.sbom.spdx.json
+          output-file: ${{ env.SBOM_FILE }}
           upload-artifact: true
           upload-release-assets: false
 
       - name: Upload SBOM attestation
-        uses: actions/attest@bdehamer/consolidate
-        env:
-          INPUT_PRIVATE-SIGNING: ${{ inputs.private-signing }}
+        id: attest
+        uses: ./.github/actions/attest
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.push.outputs.digest }}
-          sbom-path: memcached-${{ github.run_id }}.sbom.spdx.json
+          sbom-path: ${{ env.SBOM_FILE }}
           push-to-registry: ${{ inputs.push-to-registry }}
           show-summary: ${{ inputs.show-summary }}
+          private-signing: ${{ inputs.private-signing }}
+
+      - name: Set up ORAS
+        if: inputs.push-to-registry == true
+        uses: oras-project/setup-oras@v1
+
+      - name: Fetch artifact index
+        if: inputs.push-to-registry == true
+        run: |
+          oras discover --format json ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.run_id }} | jq
+
+      - name: Check output
+        run: |
+          echo "attestation-id:  ${{ steps.attest.outputs.attestation-id }}"
+          echo "attestation-url: ${{ steps.attest.outputs.attestation-url }}"
+          echo "bundle-path:     ${{ steps.attest.outputs.bundle-path }}"
+          cat ${RUNNER_TEMP}/created_attestation_paths.txt

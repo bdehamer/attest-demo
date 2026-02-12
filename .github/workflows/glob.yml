@@ -1,40 +1,66 @@
-name: Stress Test
+name: Multi-Subject Attestation
 
 on:
   workflow_dispatch:
-
+    inputs:
+      artifact-count:
+        description: "Number of artifacts to generate"
+        type: string
+        default: "1024"
+      private-signing:
+        description: "Use private signing"
+        type: boolean
+        default: true
+      show-summary:
+        description: "Show attestation summary"
+        type: boolean
+        default: true
 jobs:
   build:
-    name: attest many subjects
+    name: attest
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       attestations: write
       id-token: write
 
     steps:
-      - uses: hmarr/debug-action@v2
-      - name: snap
-        run: |
-          sudo snap search snappy
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Debug
+        uses: ./.github/actions/debug
+
       - name: Build artifacts
         run: |
           mkdir subdir
-          for i in {1..1024}
+          for i in $(seq 1 ${{ inputs.artifact-count }})
           do
             echo $i > artifact-${i}.bin
             date >> artifact-${i}.bin
           done
+
+      - name: Upload subject
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts
+          path: "**/artifact-*.bin"
+
       - name: Attest artifact
         id: attest
-        uses: actions/attest@main
-        env:
-          INPUT_PRIVATE-SIGNING: 'true'
+        uses: ./.github/actions/attest
         with:
           subject-path: |
             **/artifact-*.bin
-          predicate-type: 'text/plain'
-          predicate: '{}'
+          predicate-type: "application/octet-stream"
+          predicate: "{}"
+          private-signing: ${{ inputs.private-signing }}
+          show-summary: ${{ inputs.show-summary }}
+
       - name: Check output
         run: |
-          echo "${{ steps.attest.outputs.attestation-id }}"
-          echo "${{ steps.attest.outputs.attestation-url }}"
+          echo "attestation-id:  ${{ steps.attest.outputs.attestation-id }}"
+          echo "attestation-url: ${{ steps.attest.outputs.attestation-url }}"
+          echo "bundle-path:     ${{ steps.attest.outputs.bundle-path }}"
+
+          cat ${RUNNER_TEMP}/created_attestation_paths.txt

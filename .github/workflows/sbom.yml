@@ -24,6 +24,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Debug
+        uses: ./.github/actions/debug
+
       - name: Set-up Node
         uses: actions/setup-node@v6
         with:
@@ -53,24 +56,33 @@ jobs:
           name: subject
           path: projects/node-pkg/attest-demo-*.tgz
 
-      - name: Attest artifact
-        uses: actions/attest@bdehamer/consolidate
-        env:
-          INPUT_PRIVATE-SIGNING: ${{ inputs.private-signing }}
+      - name: Attest artifact (SPDX)
+        id: attest-spdx
+        uses: ./.github/actions/attest
         with:
           subject-path: projects/node-pkg/attest-demo-*.tgz
           sbom-path: projects/node-pkg/sbom.spdx.json
           show-summary: ${{ inputs.show-summary }}
+          private-signing: ${{ inputs.private-signing }}
 
-      - name: Attest artifact
-        uses: actions/attest@bdehamer/consolidate
-        env:
-          INPUT_PRIVATE-SIGNING: ${{ inputs.private-signing }}
+      - name: Check output (SPDX)
+        run: |
+          echo "attestation-id:  ${{ steps.attest-spdx.outputs.attestation-id }}"
+          echo "attestation-url: ${{ steps.attest-spdx.outputs.attestation-url }}"
+          echo "bundle-path:     ${{ steps.attest-spdx.outputs.bundle-path }}"
+
+      - name: Attest artifact (CycloneDX)
+        id: attest-cdx
+        uses: ./.github/actions/attest
         with:
           subject-path: projects/node-pkg/attest-demo-*.tgz
           sbom-path: projects/node-pkg/sbom.cyclonedx.json
           show-summary: ${{ inputs.show-summary }}
+          private-signing: ${{ inputs.private-signing }}
 
-      - name: List attestation paths
+      - name: Check output (CycloneDX)
         run: |
+          echo "attestation-id:  ${{ steps.attest-cdx.outputs.attestation-id }}"
+          echo "attestation-url: ${{ steps.attest-cdx.outputs.attestation-url }}"
+          echo "bundle-path:     ${{ steps.attest-cdx.outputs.bundle-path }}"
           cat ${RUNNER_TEMP}/created_attestation_paths.txt

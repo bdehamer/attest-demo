@@ -1,0 +1,89 @@
+name: "Attest"
+description: "Wrapper for actions/attest"
+
+inputs:
+  subject-path:
+    description:
+      "Path to the artifact serving as the subject of the attestation"
+    required: false
+  subject-name:
+    description: "Subject name as it should appear in the attestation"
+    required: false
+  subject-digest:
+    description: "SHA256 digest of the subject for the attestation"
+    required: false
+  subject-checksums:
+    description: "Path to checksums file containing digest and name of subjects"
+    required: false
+  predicate-type:
+    description: "URI identifying the type of the predicate"
+    required: false
+  predicate:
+    description: "String containing the value for the attestation predicate"
+    required: false
+  predicate-path:
+    description:
+      "Path to the file which contains the content for the attestation predicate"
+    required: false
+  sbom-path:
+    description: "Path to the SBOM file"
+    required: false
+  push-to-registry:
+    description: "Whether to push the attestation to the image registry"
+    required: false
+    default: "false"
+  create-storage-record:
+    description: "Whether to create a storage record for the artifact"
+    required: false
+    default: "true"
+  show-summary:
+    description:
+      "Whether to attach a list of generated attestations to the workflow run
+      summary page"
+    required: false
+    default: "true"
+  github-token:
+    description: "The GitHub token used to make authenticated API requests"
+    required: false
+    default: ${{ github.token }}
+  private-signing:
+    description: "Use private signing"
+    required: false
+    default: "false"
+
+outputs:
+  attestation-id:
+    description: "GitHub ID for the attestation"
+    value: ${{ steps.attest.outputs.attestation-id }}
+  attestation-url:
+    description: "URL for the attestation summary"
+    value: ${{ steps.attest.outputs.attestation-url }}
+  bundle-path:
+    description:
+      "Absolute path to the file containing the generated attestation"
+    value: ${{ steps.attest.outputs.bundle-path }}
+  storage-record-ids:
+    description: "GitHub IDs for the storage records"
+    value: ${{ steps.attest.outputs.storage-record-ids }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Attest
+      id: attest
+      uses: actions/attest@bdehamer/consolidate
+      env:
+        INPUT_PRIVATE-SIGNING: ${{ inputs.private-signing }}
+      with:
+        subject-path: ${{ inputs.subject-path }}
+        subject-name: ${{ inputs.subject-name }}
+        subject-digest: ${{ inputs.subject-digest }}
+        subject-checksums: ${{ inputs.subject-checksums }}
+        predicate-type: ${{ inputs.predicate-type }}
+        predicate: ${{ inputs.predicate }}
+        predicate-path: ${{ inputs.predicate-path }}
+        sbom-path: ${{ inputs.sbom-path }}
+        push-to-registry: ${{ inputs.push-to-registry }}
+        create-storage-record: ${{ inputs.create-storage-record }}
+        show-summary: ${{ inputs.show-summary }}
+        github-token: ${{ inputs.github-token }}

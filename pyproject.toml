@@ -1,6 +1,0 @@
-[project]
-name = "github-provenance-demo"
-dynamic = ["version"]
-description = "Showing build provenance with Python packages"
-readme = "README.md"
-

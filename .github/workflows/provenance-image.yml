@@ -21,6 +21,7 @@ jobs:
     name: attest
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       packages: write
       attestations: write
       id-token: write
@@ -29,6 +30,12 @@ jobs:
       IMAGE_NAME: ${{ github.repository }}
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Debug
+        uses: ./.github/actions/debug
+
       - name: Create subject
         run: |
           echo "$RANDOM-$(date +%s)-$(uuidgen)" > artifact.txt
@@ -64,11 +71,27 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.run_id }}
 
       - name: Attest artifact
-        uses: actions/attest@bdehamer/consolidate
-        env:
-          INPUT_PRIVATE-SIGNING: ${{ inputs.private-signing }}
+        id: attest
+        uses: ./.github/actions/attest
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: ${{ inputs.push-to-registry }}
           show-summary: ${{ inputs.show-summary }}
+          private-signing: ${{ inputs.private-signing }}
+
+      - name: Set up ORAS
+        if: inputs.push-to-registry == true
+        uses: oras-project/setup-oras@v1
+
+      - name: Fetch artifact index
+        if: inputs.push-to-registry == true
+        run: |
+          oras discover --format json ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.run_id }} | jq
+
+      - name: Check output
+        run: |
+          echo "attestation-id:  ${{ steps.attest.outputs.attestation-id }}"
+          echo "attestation-url: ${{ steps.attest.outputs.attestation-url }}"
+          echo "bundle-path:     ${{ steps.attest.outputs.bundle-path }}"
+          cat ${RUNNER_TEMP}/created_attestation_paths.txt

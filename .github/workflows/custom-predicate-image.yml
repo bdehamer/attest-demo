@@ -36,6 +36,12 @@ jobs:
       IMAGE_NAME: ${{ github.repository }}
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Debug
+        uses: ./.github/actions/debug
+
       - name: Create subject
         run: |
           echo "$RANDOM-$(date +%s)-$(uuidgen)" > artifact.txt
@@ -68,7 +74,7 @@ jobs:
           push: true
           sbom: false
           provenance: false
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.run_id }}
 
       - name: Create predicate (file)
         id: predicate
@@ -86,9 +92,7 @@ jobs:
       - name: Attest artifact (file)
         if: inputs.predicate-source == 'file'
         id: attest-file
-        uses: actions/attest@bdehamer/consolidate
-        env:
-          INPUT_PRIVATE-SIGNING: ${{ inputs.private-signing }}
+        uses: ./.github/actions/attest
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.push.outputs.digest }}
@@ -96,13 +100,21 @@ jobs:
           predicate-path: predicate.json
           push-to-registry: ${{ inputs.push-to-registry }}
           show-summary: ${{ inputs.show-summary }}
+          private-signing: ${{ inputs.private-signing }}
+
+      - name: Check output
+        if: inputs.predicate-source == 'file'
+        run: |
+          echo "attestation-id:  ${{ steps.attest-file.outputs.attestation-id }}"
+          echo "attestation-url: ${{ steps.attest-file.outputs.attestation-url }}"
+          echo "bundle-path:     ${{ steps.attest-file.outputs.bundle-path }}"
+
+          cat ${RUNNER_TEMP}/created_attestation_paths.txt
 
       - name: Attest artifact (literal)
         if: inputs.predicate-source == 'literal'
         id: attest-literal
-        uses: actions/attest@bdehamer/consolidate
-        env:
-          INPUT_PRIVATE-SIGNING: ${{ inputs.private-signing }}
+        uses: ./.github/actions/attest
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.push.outputs.digest }}
@@ -110,3 +122,22 @@ jobs:
           predicate: ${{ steps.predicate.outputs.json }}
           push-to-registry: ${{ inputs.push-to-registry }}
           show-summary: ${{ inputs.show-summary }}
+          private-signing: ${{ inputs.private-signing }}
+
+      - name: Set up ORAS
+        if: inputs.push-to-registry == true
+        uses: oras-project/setup-oras@v1
+
+      - name: Fetch artifact index
+        if: inputs.push-to-registry == true
+        run: |
+          oras discover --format json ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.run_id }} | jq
+
+      - name: Check output
+        if: inputs.predicate-source == 'literal'
+        run: |
+          echo "attestation-id:  ${{ steps.attest-literal.outputs.attestation-id }}"
+          echo "attestation-url: ${{ steps.attest-literal.outputs.attestation-url }}"
+          echo "bundle-path:     ${{ steps.attest-literal.outputs.bundle-path }}"
+
+          cat ${RUNNER_TEMP}/created_attestation_paths.txt
