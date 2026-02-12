@@ -1,15 +1,11 @@
 ---
-name: Multi-Subject
+name: GoReleaser (Checksums)
 
 on:
   workflow_dispatch:
     inputs:
       private-signing:
         description: "Use private signing"
-        type: boolean
-        default: true
-      push-to-registry:
-        description: "Push attestation to registry"
         type: boolean
         default: true
       show-summary:
@@ -69,10 +65,17 @@ jobs:
         id: attest
         uses: ./.github/actions/attest
         with:
-          subject-checksums: dist/attest-demo_checksums.txt
+          subject-checksums: projects/go-img/dist/attest-demo_checksums.txt
           private-signing: ${{ inputs.private-signing }}
-          push-to-registry: ${{ inputs.push-to-registry }}
           show-summary: ${{ inputs.show-summary }}
+
+      - name: Check output
+        run: |
+          echo "attestation-id:  ${{ steps.attest.outputs.attestation-id }}"
+          echo "attestation-url: ${{ steps.attest.outputs.attestation-url }}"
+          echo "bundle-path:     ${{ steps.attest.outputs.bundle-path }}"
+
+          cat ${RUNNER_TEMP}/created_attestation_paths.txt
 
       - name: Verify
         env:
