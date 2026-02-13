@@ -71,7 +71,7 @@ runs:
   steps:
     - name: Attest
       id: attest
-      uses: actions/attest@bdehamer/consolidate
+      uses: actions/attest@bdehamer/esm
       env:
         INPUT_PRIVATE-SIGNING: ${{ inputs.private-signing }}
       with:
