@@ -71,7 +71,7 @@ runs:
   steps:
     - name: Attest
       id: attest
-      uses: actions/attest@bdehamer/orchestration-id-hacking
+      uses: actions/attest-build-provenance@bdehamer/v4
       env:
         INPUT_PRIVATE-SIGNING: ${{ inputs.private-signing }}
       with:
