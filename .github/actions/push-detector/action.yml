@@ -1,0 +1,18 @@
+name: "Push Detector"
+description: >
+  Detects container image pushes from docker/build-push-action by monitoring
+  buildx metadata files written to the runner temp directory. Captures the
+  image name and remote registry digest for each detected push.
+
+outputs:
+  pushes:
+    description: >
+      JSON array of detected pushes. Each entry contains "image" (the
+      fully-qualified image reference) and "digest" (the remote registry
+      manifest digest).
+
+runs:
+  using: "node20"
+  main: "main.js"
+  post: "post.js"
+  post-if: "always()"
