@@ -25,6 +25,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: CargoWall
+        uses: code-cargo/cargowall-action@v1
+        with:
+          mode: audit
+          offline: true
+
       - name: Debug
         uses: ./.github/actions/debug
 
