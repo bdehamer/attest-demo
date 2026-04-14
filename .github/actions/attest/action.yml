@@ -71,9 +71,10 @@ runs:
   steps:
     - name: Attest
       id: attest
-      uses: actions/attest@v4
+      uses: actions/attest@bdehamer/skip-attestation-store
       env:
         INPUT_PRIVATE-SIGNING: ${{ inputs.private-signing }}
+        INPUT_SKIP-ATTESTATION-STORE: true
       with:
         subject-path: ${{ inputs.subject-path }}
         subject-name: ${{ inputs.subject-name }}
