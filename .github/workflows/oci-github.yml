@@ -56,6 +56,3 @@ jobs:
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
-      - name: Fetch artifact index
-        run: |
-          oras discover --format json ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest | jq
