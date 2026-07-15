@@ -71,7 +71,7 @@ runs:
   steps:
     - name: Attest
       id: attest
-      uses: actions/attest@bdehamer/skip-attestation-store
+      uses: actions/attest@main
       env:
         INPUT_PRIVATE-SIGNING: ${{ inputs.private-signing }}
         INPUT_SKIP-ATTESTATION-STORE: true
