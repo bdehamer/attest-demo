@@ -73,6 +73,10 @@ jobs:
           provenance: false
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.run_id }}
 
+      - name: Capture artifact
+        run: |
+          echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.run_id }}@${{ steps.push.outputs.digest }}" >> ${GITHUB_ARTIFACTS}
+
       - name: Attest artifact
         id: attest
         uses: ./.github/actions/attest
