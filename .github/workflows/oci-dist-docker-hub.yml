@@ -1,0 +1,39 @@
+name: OCI Distribution Client (Docker Hub)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  oci-dist-dockerhub:
+    name: Push & Attach (Docker Hub)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      REGISTRY: docker.io
+      IMAGE_NAME: ${{ github.repository }}
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install oci-distribution
+        working-directory: .github/oci-distribution
+        run: npm install oci-distribution@latest
+
+      - name: Exercise oci-distribution
+        working-directory: .github/oci-distribution
+        env:
+          OCI_REGISTRY: ${{ env.REGISTRY }}
+          OCI_REPOSITORY: ${{ env.IMAGE_NAME }}
+        run: node test.mjs
