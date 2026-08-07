@@ -34,6 +34,7 @@ const ARTIFACT_LAYER_MEDIA_TYPE =
   'application/vnd.oci-distribution.demo.content.v1+json'
 
 const enc = (s) => new TextEncoder().encode(s)
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 function requireEnv(name) {
   const value = process.env[name]
@@ -121,16 +122,43 @@ async function attachArtifact(repo, subject) {
 }
 
 // Walk the image's referrers, fetch the artifact manifest, and pull its blob.
+// Discover the attached artifact among the subject's referrers. Some registries
+// (e.g. Docker Hub) acknowledge the subject on push but their referrers index is
+// eventually consistent, so poll with backoff until the referrer shows up.
+async function discoverReferrer(repo, subjectDigest, artifactDigest) {
+  const maxAttempts = 8
+  let seen = 0
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const index = await repo.referrers.list(subjectDigest, {
+      artifactType: ARTIFACT_TYPE,
+    })
+    seen = index.manifests.length
+    const referrer = index.manifests.find((m) => m.digest === artifactDigest)
+    if (referrer) {
+      console.log(
+        `  • found the artifact among ${seen} referrer(s) of type ${ARTIFACT_TYPE}` +
+          (attempt > 1 ? ` (attempt ${attempt})` : ''),
+      )
+      return referrer
+    }
+    if (attempt < maxAttempts) {
+      const delayMs = Math.min(1000 * 2 ** (attempt - 1), 5000)
+      console.log(
+        `  • not indexed yet (saw ${seen} referrer(s)); retrying in ${delayMs}ms [${attempt}/${maxAttempts}]`,
+      )
+      await sleep(delayMs)
+    }
+  }
+  throw new Error(
+    `attached artifact ${artifactDigest} not found among the image referrers after ${maxAttempts} attempts (last saw ${seen})`,
+  )
+}
+
 async function readBackArtifact(repo, subject, artifact, expectedPayload) {
   console.log('\n▶ Reading the artifact back via the referrers API')
 
   // 1. Discover referrers of the image, filtered to our artifact type.
-  const index = await repo.referrers.list(subject.digest, {
-    artifactType: ARTIFACT_TYPE,
-  })
-  console.log(`  • ${index.manifests.length} referrer(s) of type ${ARTIFACT_TYPE}`)
-  const referrer = index.manifests.find((m) => m.digest === artifact.digest)
-  assert.ok(referrer, 'attached artifact not found among the image referrers')
+  const referrer = await discoverReferrer(repo, subject.digest, artifact.digest)
   assert.equal(referrer.artifactType, ARTIFACT_TYPE)
 
   // 2. Fetch the artifact manifest and confirm it points back at the image.
