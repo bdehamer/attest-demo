@@ -1,0 +1,71 @@
+name: OCI Distribution Client (Google Artifact Registry)
+
+on:
+  workflow_dispatch:
+    inputs:
+      service-principal:
+        description: 'Use service principal to auth'
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  oci-dist-gar:
+    name: Push & Attach (GAR)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      REGISTRY: us-west1-docker.pkg.dev
+      IMAGE_NAME: dehamer24/${{ github.repository }}
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - uses: 'google-github-actions/auth@v2'
+        if: inputs.service-principal
+        id: auth1
+        with:
+          workload_identity_provider: ${{ vars.GCLOUD_WIF_PROVIDER }}
+          service_account: ${{ vars.GCLOUD_SERVICE_ACCOUNT }}
+          token_format: access_token
+
+      - name: Auth w/ registry
+        if: inputs.service-principal
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: oauth2accesstoken
+          password: ${{ steps.auth1.outputs.access_token }}
+
+      - uses: 'google-github-actions/auth@v2'
+        if: ${{ !inputs.service-principal }}
+        id: auth2
+        with:
+          workload_identity_provider: ${{ vars.GCLOUD_WIF_PROVIDER2 }}
+          project_id: ${{ vars.GCLOUD_PROJECT_ID }}
+
+      - name: Auth w/ registry
+        if: ${{ !inputs.service-principal }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: oauth2accesstoken
+          password: ${{ steps.auth2.outputs.auth_token }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install oci-distribution
+        working-directory: .github/oci-distribution
+        run: npm install oci-distribution@latest
+
+      - name: Exercise oci-distribution
+        working-directory: .github/oci-distribution
+        env:
+          OCI_REGISTRY: ${{ env.REGISTRY }}
+          OCI_REPOSITORY: ${{ env.IMAGE_NAME }}
+        run: node test.mjs

@@ -1,0 +1,44 @@
+name: OCI Distribution Client (Azure Container Registry)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  oci-dist-acr:
+    name: Push & Attach (ACR)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      REGISTRY: dehamer.azurecr.io
+      IMAGE_NAME: ${{ github.repository }}
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure
+        uses: azure/login@6c251865b4e6290e7b78be643ea2d005bc51f69a # v2.1.1
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set up docker credentials
+        run: az acr login --name ${{ env.REGISTRY }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install oci-distribution
+        working-directory: .github/oci-distribution
+        run: npm install oci-distribution@latest
+
+      - name: Exercise oci-distribution
+        working-directory: .github/oci-distribution
+        env:
+          OCI_REGISTRY: ${{ env.REGISTRY }}
+          OCI_REPOSITORY: ${{ env.IMAGE_NAME }}
+        run: node test.mjs

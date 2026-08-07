@@ -1,0 +1,44 @@
+name: OCI Distribution Client (AWS ECR)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  oci-dist-ecr:
+    name: Push & Attach (ECR)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      REGISTRY: 123509514931.dkr.ecr.us-east-1.amazonaws.com
+      IMAGE_NAME: ${{ github.repository }}
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          role-to-assume: arn:aws:iam::123509514931:role/GitHubAction-AssumeRole
+          managed-session-policies: arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install oci-distribution
+        working-directory: .github/oci-distribution
+        run: npm install oci-distribution@latest
+
+      - name: Exercise oci-distribution
+        working-directory: .github/oci-distribution
+        env:
+          OCI_REGISTRY: ${{ env.REGISTRY }}
+          OCI_REPOSITORY: ${{ env.IMAGE_NAME }}
+        run: node test.mjs
