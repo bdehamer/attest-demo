@@ -21,9 +21,9 @@ jobs:
       IMAGE_NAME: dehamer24/${{ github.repository }}
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - uses: 'google-github-actions/auth@v2'
+      - uses: 'google-github-actions/auth@v3'
         if: inputs.service-principal
         id: auth1
         with:
@@ -33,13 +33,13 @@ jobs:
 
       - name: Auth w/ registry
         if: inputs.service-principal
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: oauth2accesstoken
           password: ${{ steps.auth1.outputs.access_token }}
 
-      - uses: 'google-github-actions/auth@v2'
+      - uses: 'google-github-actions/auth@v3'
         if: ${{ !inputs.service-principal }}
         id: auth2
         with:
@@ -48,14 +48,14 @@ jobs:
 
       - name: Auth w/ registry
         if: ${{ !inputs.service-principal }}
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: oauth2accesstoken
           password: ${{ steps.auth2.outputs.auth_token }}
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 24
 
