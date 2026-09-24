@@ -1,0 +1,104 @@
+name: Build Provenance (Image)
+
+on:
+  workflow_dispatch:
+    inputs:
+      private-signing:
+        description: "Use private signing"
+        type: boolean
+        default: true
+      push-to-registry:
+        description: "Push attestation to registry"
+        type: boolean
+        default: true
+      show-summary:
+        description: "Show attestation summary"
+        type: boolean
+        default: true
+
+jobs:
+  build:
+    name: attest
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Push Detector
+        uses: ./.github/actions/push-detector
+
+      - name: Debug
+        uses: ./.github/actions/debug
+
+      - name: Create subject
+        run: |
+          echo "$RANDOM-$(date +%s)-$(uuidgen)" > artifact.txt
+
+      - name: Build Dockerfile
+        run: |
+          cat <<EOF > Dockerfile
+          FROM scratch
+          COPY artifact.txt .
+          EOF
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          sbom: false
+          provenance: false
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.run_id }}
+
+      - name: Capture artifact
+        run: |
+          echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.run_id }}@${{ steps.push.outputs.digest }}" >> ${GITHUB_ARTIFACTS}
+
+      - name: Attest artifact
+        id: attest
+        uses: ./.github/actions/attest
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: ${{ inputs.push-to-registry }}
+          show-summary: ${{ inputs.show-summary }}
+          private-signing: ${{ inputs.private-signing }}
+
+      - name: Set up ORAS
+        if: inputs.push-to-registry == true
+        uses: oras-project/setup-oras@v1
+
+      - name: Fetch artifact index
+        if: inputs.push-to-registry == true
+        run: |
+          oras discover --format json ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.run_id }} | jq
+
+      - name: Check output
+        run: |
+          echo "attestation-id:  ${{ steps.attest.outputs.attestation-id }}"
+          echo "attestation-url: ${{ steps.attest.outputs.attestation-url }}"
+          echo "bundle-path:     ${{ steps.attest.outputs.bundle-path }}"
+          cat ${RUNNER_TEMP}/created_attestation_paths.txt
