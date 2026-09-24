@@ -1,0 +1,9 @@
+name: Control Probe
+on: push
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "GITHUB_WORKFLOW_REF=$GITHUB_WORKFLOW_REF"
